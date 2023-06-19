@@ -66,24 +66,20 @@ def on_mouse_move(event):
 
 
 def on_mouse_up(event):
-    x1, y1, x2, y2 = preview_canvas.bbox('preview_img_tag')  # 画像の境界ボックスを取得
-    canvas_width = preview_canvas.winfo_width()  # キャンバスの幅
-    canvas_height = preview_canvas.winfo_height()  # キャンバスの高さ
+    x1, y1, x2, y2 = preview_canvas.bbox('preview_img_tag')
+    canvas_width = preview_canvas.winfo_width()
+    canvas_height = preview_canvas.winfo_height()  
 
-    # 左端がキャンバス外に出ないように調整
-    if x1 < 0:
-        preview_canvas.move('preview_img_tag', -x1, 0)
+    if x1 < 0 and x2 < canvas_width:
+       preview_canvas.move('preview_img_tag', canvas_width - x2, 0)
 
-    # 上端がキャンバス外に出ないように調整
-    if y1 < 0:
+    if y1 < 0 and y2 < canvas_height:
         preview_canvas.move('preview_img_tag', 0, -y1)
 
-    # 右端がキャンバス外に出ないように調整
-    if x2 > canvas_width:
-        preview_canvas.move('preview_img_tag', canvas_width - x2, 0)
+    if x2 > canvas_width and x1 > 0:
+        preview_canvas.move('preview_img_tag', -x1, 0)
 
-    # 下端がキャンバス外に出ないように調整
-    if y2 > canvas_height:
+    if y2 > canvas_height and y1 > 0:
         preview_canvas.move('preview_img_tag', 0, canvas_height - y2)
 
 
