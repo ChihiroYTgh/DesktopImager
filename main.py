@@ -42,45 +42,40 @@ def file_close():
         preview_canvas.delete("preview_img_tag")
         preview_canvas.itemconfigure('select_btn',state=tk.NORMAL)
     except:
-        preview_canvas.create_text(640,360,text="現在ファイルは指定されていません。",anchor=tk.CENTER)
+        pass
 
-prev_x = 0
-prev_y = 0
+pvi_x = 0
+pvi_y = 0
 
-def on_mouse_down(event):
-    global prev_x, prev_y
-    prev_x = event.x
-    prev_y = event.y
+def click_in(event):
+    global pvi_x, pvi_y
+    pvi_x = event.x
+    pvi_y = event.y
 
-   
-
-def on_mouse_move(event):
-    global prev_x, prev_y
-    dx = event.x - prev_x
-    dy = event.y - prev_y
+def click_hold(event):
+    global pvi_x, pvi_y
+    dx = event.x - pvi_x
+    dy = event.y - pvi_y
     preview_canvas.move('preview_img_tag', dx, dy)
-    prev_x = event.x
-    prev_y = event.y
+    pvi_x = event.x
+    pvi_y = event.y
 
-    
-
-
-def on_mouse_up(event):
-    x1, y1, x2, y2 = preview_canvas.bbox('preview_img_tag')
+def click_out(event):
+    xNW, yNW, xSE, ySE = preview_canvas.bbox('preview_img_tag')
     canvas_width = preview_canvas.winfo_width()
     canvas_height = preview_canvas.winfo_height()  
 
-    if x1 < 0 and x2 < canvas_width:
-       preview_canvas.move('preview_img_tag', canvas_width - x2, 0)
+    if xNW < 0 and xSE < canvas_width:
+       preview_canvas.move('preview_img_tag', canvas_width - xSE, 0)
 
-    if y1 < 0 and y2 < canvas_height:
-        preview_canvas.move('preview_img_tag', 0, -y1)
+    if yNW < 0 and ySE < canvas_height:
+        preview_canvas.move('preview_img_tag', 0, canvas_height - ySE)
 
-    if x2 > canvas_width and x1 > 0:
-        preview_canvas.move('preview_img_tag', -x1, 0)
+    if xSE > canvas_width and xNW > 0:
+        preview_canvas.move('preview_img_tag', -xNW, 0)
 
-    if y2 > canvas_height and y1 > 0:
-        preview_canvas.move('preview_img_tag', 0, canvas_height - y2)
+    if ySE > canvas_height and yNW > 0:
+        preview_canvas.move('preview_img_tag', 0, -yNW)
 
 
 
@@ -102,9 +97,9 @@ btn_file_open = tk.Button(preview_canvas, text='ファイルを選択する', co
 preview_canvas.create_window(640, 360, anchor=tk.CENTER, tags='select_btn', window=btn_file_open)
 preview_canvas.pack(anchor=tk.NW)
 
-preview_canvas.bind("<Button-1>", on_mouse_down)
-preview_canvas.bind("<B1-Motion>", on_mouse_move)
-preview_canvas.bind("<ButtonRelease-1>", on_mouse_up)
+preview_canvas.bind("<Button-1>", click_in)
+preview_canvas.bind("<Button1-Motion>", click_hold)
+preview_canvas.bind("<ButtonRelease-1>", click_out)
 
 
 # ウィンドウの描画
