@@ -7,13 +7,13 @@ def create_view(file_path):
     global preview_img
     origin_img = Image.open(file_path)
     if origin_img.width//16 >= origin_img.height//9:
-        width = math.ceil(origin_img.width*720//origin_img.height)
-        hd_img = origin_img.resize((width,720))
+        width = math.ceil(origin_img.width*preview_canvas.winfo_height()//origin_img.height)
+        hd_img = origin_img.resize((width,preview_canvas.winfo_height()))
     else:
-        height = math.ceil(origin_img.height*1280//origin_img.width)
-        hd_img = origin_img.resize((1280,height))
+        height = math.ceil(origin_img.height*preview_canvas.winfo_width()//origin_img.width)
+        hd_img = origin_img.resize((preview_canvas.winfo_width(),height))
     preview_img = ImageTk.PhotoImage(hd_img)
-    preview_canvas.create_image(642, 362, image=preview_img, tag='preview_img_tag', anchor=tk.CENTER)
+    preview_canvas.create_image(preview_canvas.winfo_width()//2, preview_canvas.winfo_height()//2, image=preview_img, tag='preview_img_tag', anchor=tk.CENTER)
 
 def select_file():
     idir = os.path.expanduser('~/Desktop')
