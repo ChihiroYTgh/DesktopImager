@@ -4,11 +4,12 @@ import math,os
 #画像の表示
 from PIL import Image,ImageTk
 def create_view(file_path):
-    global preview_img
+    global preview_img,mag
     origin_img = Image.open(file_path)
     if origin_img.width//16 >= origin_img.height//9:
         width = math.ceil(origin_img.width*preview_canvas.winfo_height()//origin_img.height)
         hd_img = origin_img.resize((width,preview_canvas.winfo_height()))
+        mag = origin_img.width
     else:
         height = math.ceil(origin_img.height*preview_canvas.winfo_width()//origin_img.width)
         hd_img = origin_img.resize((preview_canvas.winfo_width(),height))
@@ -84,13 +85,14 @@ root.title("desktoping")  #title
 root.geometry("1536x864")    #window size
 
 # menubarの大元（コンテナ）の作成と設置
-menu_bar = tkinter.Menu(root)
+menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
 #メニューに親メニュー（ファイル）を作成する 
-menu_file = tkinter.Menu(menu_bar,tearoff=False) 
+menu_file = tk.Menu(menu_bar,tearoff=False) 
 menu_bar.add_cascade(label='ファイル', menu=menu_file) 
 menu_file.add_command(label='ファイルを開く', command=file_open)
 menu_file.add_command(label='閉じる', command=file_close)
+
 
 preview_canvas = tk.Canvas(root, bg="white", height=720, width=1280)
 btn_file_open = tk.Button(preview_canvas, text='ファイルを選択する', command=file_open)
