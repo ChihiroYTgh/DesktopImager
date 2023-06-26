@@ -54,7 +54,6 @@ def click_in(event):
     pvi_y = event.y
 
 def click_hold(event):
-    global pvi_x, pvi_y
     dx = event.x - pvi_x
     dy = event.y - pvi_y
     preview_canvas.move('preview_img_tag', dx, dy)
