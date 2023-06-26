@@ -5,26 +5,21 @@ import tkinter.filedialog
 from PIL import Image,ImageTk,ImageGrab
 
 def create_view(file_path):
-    #オリジナル画像の比率生成
-    global origin_img, preview_img
+    global origin_img, preview_img, reset_x,reset_y
     origin_img = Image.open(file_path)
     img_w = origin_img.width
     img_h = origin_img.height
     gcd = math.gcd(img_w,img_h)
     img_sr_w,img_sr_h = img_w//gcd,img_h//gcd
-
-    #表示版のサイズ合わせ
-    if desk_sr_w*img_sr_h >= desk_sr_h*img_sr_w:   #縦幅のほうが長い場合
-        #モニターの横幅に画像を合わせる
+    if desk_sr_w*img_sr_h >= desk_sr_h*img_sr_w:
         height = math.ceil(origin_img.height*desk_w//origin_img.width)
-        preview_img = origin_img.resize((preview_canvas.winfo_width(),height))
+        preview_img = origin_img.resize((preview_canvas.winfo_width(),height))        #モニターの横幅に画像を合わせる
     else:
-        #モニターの縦幅に合わせる
         width = math.ceil(origin_img.width*desk_h//origin_img.height)
-        preview_img = origin_img.resize((width,preview_canvas.winfo_height()))
-        
+        preview_img = origin_img.resize((width,preview_canvas.winfo_height()))        #モニターの縦幅に合わせる
     preview_img = ImageTk.PhotoImage(preview_img)
     preview_canvas.create_image(preview_canvas.winfo_width()//2, preview_canvas.winfo_height()//2, image=preview_img, tag='preview_img_tag', anchor=tk.CENTER)
+    reset_x,reset_y,reset_w,reset_h = preview_canvas.bbox('preview_img_tag')
     preview_canvas.bind("<Button-1>", click_in)
     preview_canvas.bind("<Button1-Motion>", click_hold)
     preview_canvas.bind("<ButtonRelease-1>", click_out)
@@ -84,20 +79,10 @@ def file_close():
 def preview_img_save():
     try:
         root.attributes("-alpha", 1.0)
-        bbox = []
-        for i in preview_canvas.bbox('preview_img_tag'):
-            bbox.append(i)
-        if bbox[0] <= 0:
-            bbox[0] = abs(bbox[0])
-        if bbox[1] <= 1:
-            bbox[1] = abs(bbox[1])
-        if bbox[2] >= desk_w:
-            bbox[2] = bbox[0] + desk_w
-        if bbox[3] >= desk_h:
-            bbox[3] = bbox[1] + desk_h
-        clip_img = preview_img.crop()
-        print(folder_path + "/" + (len(folder_path) + 1) + ".png")
-        # clip_img.save(folder_path + "/" + (len(folder_path) + 1) + ".png")
+        file_name,file_ete = os.path.splitext(file_path)
+        ImageGrab.grab(bbox=(0,0,desk_w,desk_h)).save(file_name + "_di.png")
+        file_close()
+        root.attributes("-alpha", 0.8)
     except:
         pass
 
@@ -106,24 +91,24 @@ def close_root(event):
 
 def press_keys(event):
     if event.keysym == "Escape":
-        root.quit()     #quit()はmainloop終了後もリソースを保持する。
-                        #destroy()はmainloop終了時にリソースを破棄する。
-    elif event.keysym == "w" and event.state == 4:  # 4はCtrlキーのステート値
+        root.quit()
+    elif event.keysym == "w" and (event.state == 4 or 12):    #4はCtrlキーのステート値
         file_close()
-    elif event.keysym == "s" and event.state == 4:
+    elif event.keysym == "s" and (event.state == 4 or 12):    #+8はNumLockキーのステート値
         preview_img_save()
+    elif event.keysym == "r" and (event.state == 4 or 12):
+        try:
+            preview_canvas.moveto('preview_img_tag', reset_x, reset_y)
+        except:
+            pass
 
 root = tk.Tk()                          #ウィンドウ生成
 root.title("desktoping")                #ウィンドウ名
-root.attributes('-fullscreen', True)    #ウィンドウの全画面化
-root.attributes("-alpha", 0.8)          #ウィンドウの半透明化
-root.bind('<Escape>', close_root)        #ウィンドウの終了条件
-root.bind("<KeyPress>", press_keys)
+root.attributes('-fullscreen', True, "-alpha", 0.8)    #ウィンドウの全画面化・半透明化
+root.bind('<KeyPress>', press_keys)
 
-#モニターの画面比率生成（システム設定でモニター番号1になっているモニター
 desk_w = root.winfo_screenwidth()
 desk_h = root.winfo_screenheight()
-#比率出さなくてもピクセル数自体を比較に使ってもいいのでは？要検討
 gcd = math.gcd(desk_w,desk_h)
 desk_sr_w,desk_sr_h = desk_w//gcd,desk_h//gcd
 
