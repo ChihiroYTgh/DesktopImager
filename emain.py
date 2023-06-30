@@ -6,17 +6,17 @@ from PIL import Image, ImageTk, ImageGrab
 
 class Desk_topingApp:
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("desk_toping")
-        self.root.attributes('-fullscreen', True, "-alpha", 0.8)
-        self.root.bind('<KeyPress>', self.press_keys)
+        self.single_mode = tk.Tk()
+        self.single_mode.title("desk_toping")
+        self.single_mode.attributes('-fullscreen', True, "-alpha", 0.8)
+        self.single_mode.bind('<KeyPress>', self.press_keys)
         
-        self.desk_w = self.root.winfo_screenwidth()
-        self.desk_h = self.root.winfo_screenheight()
+        self.desk_w = self.single_mode.winfo_screenwidth()
+        self.desk_h = self.single_mode.winfo_screenheight()
         gcd = math.gcd(self.desk_w, self.desk_h)
         self.desk_sr_w, self.desk_sr_h = self.desk_w // gcd, self.desk_h // gcd
         
-        self.preview_canvas = tk.Canvas(self.root, bg="white", highlightthickness=0)
+        self.preview_canvas = tk.Canvas(self.single_mode, bg="white", highlightthickness=0)
         self.btn_file_open = tk.Button(self.preview_canvas, text='ファイルを選択する', command=self.file_open)
         self.preview_canvas.create_window(self.desk_w // 2, self.desk_h // 2, anchor=tk.CENTER, tags='select_btn', window=self.btn_file_open)
         self.preview_canvas.pack(fill=tk.BOTH, expand=True)
@@ -32,7 +32,7 @@ class Desk_topingApp:
         
         self.create_view()
         
-        self.root.mainloop()
+        self.single_mode.mainloop()
     
     def create_view(self):
         if self.file_path is None:
@@ -105,7 +105,7 @@ class Desk_topingApp:
     
     def preview_img_save(self):
         try:
-            self.root.attributes("-alpha", 1.0)
+            self.single_mode.attributes("-alpha", 1.0)
             file_name, file_ext = os.path.splitext(self.file_path)
             now = datetime.datetime.now()
             timestamp = now.strftime("%Y%m%d_%H%M%S")
@@ -119,16 +119,16 @@ class Desk_topingApp:
                     subprocess.run(["open", save_path], shell=True)
                 except:
                     pass
-            self.root.destroy()
+            self.single_mode.destroy()
         except Exception as e:
             messagebox.showerror("エラー", f"ファイルの保存に失敗しました。\n\n{str(e)}")
     
-    def close_root(self, event):
-        self.root.destroy()
+    def close_single_mode(self, event):
+        self.single_mode.destroy()
     
     def press_keys(self, event):
         if event.keysym == "Escape":
-            self.root.quit()
+            self.single_mode.quit()
         elif event.keysym == "w" and (event.state == 4 or 12):  # 4はCtrlキーのステート値
             self.file_close()
         elif event.keysym == "s" and (event.state == 4 or 12):  # +8はNumLockキーのステート値
