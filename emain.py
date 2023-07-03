@@ -125,7 +125,16 @@ class Desk_topingApp:
     
     def close_single_mode(self, event):
         self.single_mode.destroy()
-    
+
+    def close_and_open_window(self):
+        self.file_close()
+        self.single_mode.destroy()
+
+        app1 = tk.Tk()
+        app1.geometry("500x500")
+        app1.title("app1")
+        app1.mainloop()
+
     def press_keys(self, event):
         if event.keysym == "Escape":
             self.single_mode.quit()
@@ -138,5 +147,9 @@ class Desk_topingApp:
                 self.preview_canvas.moveto('preview_img_tag', self.reset_x, self.reset_y)
             except:
                 pass
+        elif event.keysym == "y" and (event.state == 4 or 12):
+            self.close_and_open_window()
+
+    
 
 app = Desk_topingApp()
