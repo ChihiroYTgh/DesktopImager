@@ -17,8 +17,12 @@ class Desktop_imagerApp:
         self.desk_sr_w, self.desk_sr_h = self.desk_w // gcd, self.desk_h // gcd
         
         self.preview_canvas = tk.Canvas(self.simple_mode, bg="white", highlightthickness=0)
-        self.btn_file_open = tk.Button(self.preview_canvas, text='ファイルを選択する', command=self.file_open)
+        self.btn_file_open = tk.Button(self.preview_canvas, text='ファイルを選択する', command=self.file_open,
+                                       font=("BIZ UDPゴシック",18))
+        self.box_consecutive = tk.Checkbutton(self.preview_canvas, text="切り抜き後も作業を続ける", command=self.change_mode,
+                                                font=("BIZ UDPゴシック",24), fg="#333239", activeforeground="#333239")
         self.preview_canvas.create_window(self.desk_w // 2, self.desk_h // 2, anchor=tk.CENTER, tags='select_btn', window=self.btn_file_open)
+        self.preview_canvas.create_window(0, 0, anchor=tk.NW, tags='conse_box',window=self.box_consecutive)
         self.preview_canvas.pack(fill=tk.BOTH, expand=True)
         
         self.origin_img = None
@@ -89,7 +93,9 @@ class Desktop_imagerApp:
         self.preview_canvas.delete("preview_img_tag")
         self.select_file()
         self.create_view()
-        self.preview_canvas.itemconfigure('select_btn', state=tk.HIDDEN)
+        
+        self.preview_canvas.itemconfigure('select_btn', state = tk.HIDDEN)
+        self.preview_canvas.itemconfigure('conse_box', state = tk.HIDDEN)
         
     
     def file_close(self):
@@ -126,15 +132,7 @@ class Desktop_imagerApp:
         self.simple_mode.destroy()
 
     def change_mode(self):
-        self.file_close()
-        self.simple_mode.destroy()
-        self.batch_mode()
-
-    def batch_mode(self):
-        self.batch_mode = tk.Tk()
-        self.batch_mode.geometry("500x500")
-        self.batch_mode.title("Desktopping")
-        self.batch_mode.mainloop()
+        pass
 
     def press_keys(self, event):
         if event.keysym == "Escape":
