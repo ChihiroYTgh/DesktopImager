@@ -1,8 +1,40 @@
 import math
-import os, subprocess, datetime
+import os, subprocess, webbrowser, datetime
 import tkinter as tk
 import tkinter.filedialog as filedialog, tkinter.messagebox as messagebox
 from PIL import Image, ImageTk, ImageGrab
+
+class App_setting_btn(tk.Button):
+    def __init__(self, master, text, command):
+        super().__init__(master)
+        self.configure(
+            text = text,
+            command = command,
+            relief=tk.GROOVE,
+            bd=3,
+            font = ("BIZ UDPゴシック", 18),
+            bg = "#1f2447",
+            activebackground = "#1f2447",
+            fg = "#f3f4f8",
+            activeforeground = "#f3f4f8"
+        )
+
+
+class App_setting_check(tk.Checkbutton):
+    def __init__(self, master, text, **kwargs):
+        super().__init__(master, **kwargs)
+        self.configure(
+            text = text,
+            relief = tk.GROOVE,
+            bd = 3,
+            selectcolor = "#1f2447",
+            variable = tk.BooleanVar(),
+            font = ("BIZ UDPゴシック", 18),
+            bg = "#1f2447",
+            activebackground = "#1f2447",
+            fg = "#f3f4f8",
+            activeforeground = "#f3f4f8"
+        )
 
 class Desktop_imagerApp:
     def __init__(self):
@@ -22,15 +54,39 @@ class Desktop_imagerApp:
                                        font=("BIZ UDPゴシック",18),
                                        bg="#f3f4f8",
                                        fg="#1f2447")
-        self.box_consecutive = tk.Checkbutton(self.preview_canvas, text="切り抜き後も作業を続ける", variable=self.conse_var,
-                                                selectcolor="#1f2447",
-                                                font=("BIZ UDPゴシック",24),
-                                                bg="#1f2447",
-                                                activebackground="#1f2447",
-                                                fg="#f3f4f8",
-                                                activeforeground="#f3f4f8")
         self.preview_canvas.create_window(self.desk_w // 2, self.desk_h // 2, anchor=tk.CENTER, tags='select_btn', window=self.btn_file_open)
-        self.preview_canvas.create_window(0, 0, anchor=tk.NW, tags='conse_box',window=self.box_consecutive)
+        
+        self.box_consecutive = App_setting_check(
+            self.preview_canvas,
+            text = "切り抜き後も作業を続ける"
+        )
+
+        # self.box_consecutive = tk.Checkbutton(self.preview_canvas, text="切り抜き後も作業を続ける", variable=self.conse_var,
+        #                                         relief=tk.GROOVE,
+        #                                         bd=3,
+        #                                         selectcolor="#1f2447",
+        #                                         font=("BIZ UDPゴシック",18),
+        #                                         bg="#1f2447",
+        #                                         activebackground="#1f2447",
+        #                                         fg="#f3f4f8",
+        #                                         activeforeground="#f3f4f8")
+        self.preview_canvas.create_window(0, 50, anchor=tk.NW, tags='conse_box',window=self.box_consecutive)
+        
+        self.btn_sys_setting_open = App_setting_btn(self.preview_canvas,
+                                                    text="設定からメインウィンドウを変更する",
+                                                    command=self.open_sys_setting
+                                                    )
+
+        # self.btn_sys_setting_open = tk.Button(self.preview_canvas, text="設定からメインウィンドウを変更する", command=self.open_sys_setting,
+        #                                         relief=tk.GROOVE,
+        #                                         bd=3,
+        #                                         font=("BIZ UDPゴシック",18),
+        #                                         bg="#1f2447",
+        #                                         activebackground="#1f2447",
+        #                                         fg="#f3f4f8",
+        #                                         activeforeground="#f3f4f8")
+        self.preview_canvas.create_window(0, 0, anchor=tk.NW, tags='system_btn',window=self.btn_sys_setting_open)
+        
         self.preview_canvas.pack(fill=tk.BOTH, expand=True)
 
         self.origin_img = None
@@ -69,7 +125,6 @@ class Desktop_imagerApp:
         except:
             return
         
-
     def click_in(self, event):
         self.pv_x = event.x
         self.pv_y = event.y
@@ -143,15 +198,26 @@ class Desktop_imagerApp:
                     pass
             self.simple_mode.destroy()
 
+    def open_sys_setting(self):
+        try:
+            webbrowser.open('ms-settings:display')
+        except:
+            pass
+
     def batch_mode(self):
         self.batch_mode = tk.Tk()
         self.batch_mode.geometry("500x500")
         self.batch_mode.title("Desktopping")
         self.batch_mode.mainloop()
 
+    def app_quit_check(self):
+        quit_flg = messagebox.askyesno("確認","アプリを終了しますか？")
+        if quit_flg == True:
+            self.simple_mode.quit()
+
     def press_keys(self, event):    # 4はCtrlキー/8はNumLockキーのステート値
         if event.keysym == "Escape":
-            self.simple_mode.quit()
+            self.app_quit_check()
         elif event.keysym == "o" and (event.state == 4 or 12):  #プレビューに表示する画像を選択
             self.file_open()
         elif event.keysym == "w" and (event.state == 4 or 12):  #プレビューから画像を削除
@@ -163,8 +229,6 @@ class Desktop_imagerApp:
                 self.preview_canvas.moveto('preview_img_tag', self.reset_x, self.reset_y)
             except:
                 pass
-        elif event.keysym == "t" and (event.state == 4 or 12):
-            self.change_mode()
 
     
 

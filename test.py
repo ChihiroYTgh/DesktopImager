@@ -1,60 +1,215 @@
+import math
+import os, subprocess, webbrowser, datetime
 import tkinter as tk
+import tkinter.filedialog as filedialog, tkinter.messagebox as messagebox
+from PIL import Image, ImageTk, ImageGrab
 
-root = tk.Tk()
+class App_setting_btn(tk.Button):
+    def __init__(self, master, text, command):
+        super().__init__(master)
+        self.configure(
+            text = text,
+            command = command,
+            relief=tk.GROOVE,
+            bd=3,
+            font = ("BIZ UDPゴシック", 18),
+            bg = "#1f2447",
+            activebackground = "#1f2447",
+            fg = "#f3f4f8",
+            activeforeground = "#f3f4f8"
+        )
 
-app1_window = None
-app2_window = None
 
-def launch_app1():
-    global app1_window, app2_window
+class App_setting_check(tk.Checkbutton):
+    def __init__(self, master, text, **kwargs):
+        super().__init__(master, **kwargs)
+        self.configure(
+            text = text,
+            relief = tk.GROOVE,
+            bd = 3,
+            selectcolor = "#1f2447",
+            variable = tk.BooleanVar(),
+            font = ("BIZ UDPゴシック", 18),
+            bg = "#1f2447",
+            activebackground = "#1f2447",
+            fg = "#f3f4f8",
+            activeforeground = "#f3f4f8"
+        )
 
-    if app1_window is None:
-        app1_window = tk.Toplevel(root)
-        app1_window.title("App1")
-        app1_window.protocol("WM_DELETE_WINDOW", on_app1_close)  # ウィンドウの閉じるボタンに終了イベントを設定
+class Desktop_imagerApp:
+    def __init__(self):
+        self.simple_mode = tk.Tk()
+        self.simple_mode.title("Desktoping")
+        self.simple_mode.attributes('-fullscreen', True, "-alpha", 0.8)
+        self.simple_mode.bind('<KeyPress>', self.press_keys)
+        
+        # Canvasフレームの作成
+        self.canvas_frame = tk.Frame(self.simple_mode, bg="#1f2447")
+        self.canvas_frame.pack(fill=tk.BOTH, expand=True)
+        self.preview_canvas = tk.Canvas(self.canvas_frame, bg="#1f2447", highlightthickness=0)
+        self.preview_canvas.pack(fill=tk.BOTH, expand=True)
 
-        # App1のウィンドウに追加するコンテンツやロジックを記述
-        # ...
+        # Settingフレームの作成
+        self.setting_frame = tk.Frame(self.simple_mode, bg="#1f2447")
+        self.setting_frame.pack(fill=tk.X)
 
-        if app2_window is not None:
-            app2_window.destroy()
-            app2_window = None
-    else:
-        app1_window.lift()
+        # "切り抜き後も作業を続ける"のチェックボックスをSettingフレームに配置
+        self.box_consecutive = App_setting_check(
+            self.setting_frame,
+            text="切り抜き後も作業を続ける"
+        )
+        self.box_consecutive.pack(side=tk.LEFT, padx=10)
 
-def launch_app2():
-    global app1_window, app2_window
+        # "設定からメインウィンドウを変更する"のボタンをSettingフレームに配置
+        self.btn_sys_setting_open = App_setting_btn(
+            self.setting_frame,
+            text="設定からメインウィンドウを変更する",
+            command=self.open_sys_setting
+        )
+        self.btn_sys_setting_open.pack(side=tk.RIGHT, padx=10)
+        self.preview_canvas.pack(fill=tk.BOTH, expand=True)
 
-    if app2_window is None:
-        app2_window = tk.Toplevel(root)
-        app2_window.title("App2")
-        app2_window.protocol("WM_DELETE_WINDOW", on_app2_close)  # ウィンドウの閉じるボタンに終了イベントを設定
+        self.origin_img = None
+        self.preview_img = None
+        self.reset_x = None
+        self.reset_y = None
+        self.file_path = None
+        self.folder_path = None
+        self.pv_x = None
+        self.pv_y = None
+        
+        self.simple_mode.mainloop()
+    
+    def create_view(self):
+        try:
+            self.origin_img = Image.open(self.file_path)
+            
+            img_w = self.origin_img.width
+            img_h = self.origin_img.height
+            gcd = math.gcd(img_w, img_h)
+            img_sr_w, img_sr_h = img_w // gcd, img_h // gcd
+            if self.desk_sr_w * img_sr_h >= self.desk_sr_h * img_sr_w:
+                height = math.ceil(self.origin_img.height * self.desk_w // self.origin_img.width)
+                self.preview_img = self.origin_img.resize((self.preview_canvas.winfo_width(), height))
+            else:
+                width = math.ceil(self.origin_img.width * self.desk_h // self.origin_img.height)
+                self.preview_img = self.origin_img.resize((width, self.preview_canvas.winfo_height()))
+            self.preview_img = ImageTk.PhotoImage(self.preview_img)
+            self.preview_canvas.create_image(self.preview_canvas.winfo_width() // 2, self.preview_canvas.winfo_height() // 2, image=self.preview_img, tag='preview_img_tag', anchor=tk.CENTER)
+            self.reset_x, self.reset_y, reset_w, reset_h = self.preview_canvas.bbox('preview_img_tag')
+            self.preview_canvas.itemconfigure('select_btn', state=tk.HIDDEN)
+            self.preview_canvas.itemconfigure('conse_box', state=tk.HIDDEN)
+            self.id_click = self.preview_canvas.bind("<Button-1>", self.click_in)
+            self.id_hold = self.preview_canvas.bind("<Button1-Motion>", self.click_hold)
+            self.id_release = self.preview_canvas.bind("<ButtonRelease-1>", self.click_out)
+        except:
+            return
+        
+    def click_in(self, event):
+        self.pv_x = event.x
+        self.pv_y = event.y
+    
+    def click_hold(self, event):
+        dx = event.x - self.pv_x
+        dy = event.y - self.pv_y
+        self.preview_canvas.move('preview_img_tag', dx, dy)
+        self.pv_x = event.x
+        self.pv_y = event.y
+    
+    def click_out(self, event):
+        xNW, yNW, xSE, ySE = self.preview_canvas.bbox('preview_img_tag')
+        canvas_width = self.preview_canvas.winfo_width()
+        canvas_height = self.preview_canvas.winfo_height()
+        if xNW < 0 and xSE < canvas_width:
+            self.preview_canvas.move('preview_img_tag', canvas_width - xSE, 0)
+        if yNW < 0 and ySE < canvas_height:
+            self.preview_canvas.move('preview_img_tag', 0, canvas_height - ySE)
+        if xSE > canvas_width and xNW > 0:
+            self.preview_canvas.move('preview_img_tag', -xNW, 0)
+        if ySE > canvas_height and yNW > 0:
+            self.preview_canvas.move('preview_img_tag', 0, -yNW)
+    
+    def select_file(self):
+        if self.folder_path == None:
+            dir = os.path.expanduser('~/Desktop')
+        else:
+            dir = self.folder_path
+        filetype = [("画像ファイル", "*.png;*.jpg;*.jpeg;*.tif*.tiff;*.bmp")]
+        self.file_path = filedialog.askopenfilename(filetypes=filetype, initialdir=dir)
+        self.folder_path = os.path.dirname(self.file_path)
+    
+    def file_open(self):
+        self.preview_canvas.delete("preview_img_tag")
+        self.select_file()
+        self.create_view()
+        
+    
+    def file_close(self):
+        self.preview_canvas.delete("preview_img_tag")
+        self.preview_canvas.itemconfigure('select_btn', state=tk.NORMAL)
+        self.preview_canvas.itemconfigure('conse_box', state=tk.NORMAL)
+        self.preview_canvas.unbind("<Button-1>", self.id_click)
+        self.preview_canvas.unbind("<Button1-Motion>", self.id_hold)
+        self.preview_canvas.unbind("<ButtonRelease-1>", self.id_release)
 
-        # App2のウィンドウに追加するコンテンツやロジックを記述
-        # ...
+    def preview_img_save(self):
+        if self.preview_img is None:    
+            pass
+        else:
+            self.simple_mode.attributes("-alpha", 1.0)
+            file_name, file_ext = os.path.splitext(self.file_path)
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S")
+            save_path = file_name + "_" + timestamp + ".png"
+            ImageGrab.grab(bbox=(0, 0, self.desk_w, self.desk_h)).save(save_path)
+            
+        #事後処理(GUI)
+        if self.conse_var.get() == True:
+            self.simple_mode.attributes("-alpha", 0.8)
+            self.file_close()
+            self.file_open()
+        else:
+            try:
+                subprocess.run(["start", save_path], shell=True)    #windowsの場合
+            except:
+                try:
+                    subprocess.run(["open", save_path], shell=True) #MacOSの場合
+                except:
+                    pass
+            self.simple_mode.destroy()
 
-        if app1_window is not None:
-            app1_window.destroy()
-            app1_window = None
-    else:
-        app2_window.lift()
+    def open_sys_setting(self):
+        try:
+            webbrowser.open('ms-settings:display')
+        except:
+            pass
 
-def on_app1_close():
-    global app1_window
-    app1_window.destroy()
-    app1_window = None
-    launch_app2()
+    def batch_mode(self):
+        self.batch_mode = tk.Tk()
+        self.batch_mode.geometry("500x500")
+        self.batch_mode.title("Desktopping")
+        self.batch_mode.mainloop()
 
-def on_app2_close():
-    global app2_window
-    app2_window.destroy()
-    app2_window = None
-    launch_app1()
+    def app_quit_check(self):
+        quit_flg = messagebox.askyesno("確認","アプリを終了しますか？")
+        if quit_flg == True:
+            self.simple_mode.quit()
 
-app1_button = tk.Button(root, text="App1を起動", command=launch_app1)
-app1_button.pack()
+    def press_keys(self, event):    # 4はCtrlキー/8はNumLockキーのステート値
+        if event.keysym == "Escape":
+            self.app_quit_check()
+        elif event.keysym == "o" and (event.state == 4 or 12):  #プレビューに表示する画像を選択
+            self.file_open()
+        elif event.keysym == "w" and (event.state == 4 or 12):  #プレビューから画像を削除
+            self.file_close()
+        elif event.keysym == "s" and (event.state == 4 or 12):  #プレビューの画像をキャンバスサイズで保存
+            self.preview_img_save()
+        elif event.keysym == "r" and (event.state == 4 or 12):  #画像の表示位置を初期化
+            try:
+                self.preview_canvas.moveto('preview_img_tag', self.reset_x, self.reset_y)
+            except:
+                pass
 
-app2_button = tk.Button(root, text="App2を起動", command=launch_app2)
-app2_button.pack()
+    
 
-root.mainloop()
+app = Desktop_imagerApp()
