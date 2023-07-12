@@ -61,31 +61,14 @@ class Desktop_imagerApp:
             text = "切り抜き後も作業を続ける"
         )
 
-        # self.box_consecutive = tk.Checkbutton(self.preview_canvas, text="切り抜き後も作業を続ける", variable=self.conse_var,
-        #                                         relief=tk.GROOVE,
-        #                                         bd=3,
-        #                                         selectcolor="#1f2447",
-        #                                         font=("BIZ UDPゴシック",18),
-        #                                         bg="#1f2447",
-        #                                         activebackground="#1f2447",
-        #                                         fg="#f3f4f8",
-        #                                         activeforeground="#f3f4f8")
-        self.preview_canvas.create_window(0, 50, anchor=tk.NW, tags='conse_box',window=self.box_consecutive)
+        self.preview_canvas.create_window(0, 50, anchor=tk.NW, tags='setting_op',window=self.box_consecutive)
         
         self.btn_sys_setting_open = App_setting_btn(self.preview_canvas,
                                                     text="設定からメインウィンドウを変更する",
                                                     command=self.open_sys_setting
                                                     )
 
-        # self.btn_sys_setting_open = tk.Button(self.preview_canvas, text="設定からメインウィンドウを変更する", command=self.open_sys_setting,
-        #                                         relief=tk.GROOVE,
-        #                                         bd=3,
-        #                                         font=("BIZ UDPゴシック",18),
-        #                                         bg="#1f2447",
-        #                                         activebackground="#1f2447",
-        #                                         fg="#f3f4f8",
-        #                                         activeforeground="#f3f4f8")
-        self.preview_canvas.create_window(0, 0, anchor=tk.NW, tags='system_btn',window=self.btn_sys_setting_open)
+        self.preview_canvas.create_window(0, 0, anchor=tk.NW, tags='setting_op',window=self.btn_sys_setting_open)
         
         self.preview_canvas.pack(fill=tk.BOTH, expand=True)
 
@@ -118,7 +101,7 @@ class Desktop_imagerApp:
             self.preview_canvas.create_image(self.preview_canvas.winfo_width() // 2, self.preview_canvas.winfo_height() // 2, image=self.preview_img, tag='preview_img_tag', anchor=tk.CENTER)
             self.reset_x, self.reset_y, reset_w, reset_h = self.preview_canvas.bbox('preview_img_tag')
             self.preview_canvas.itemconfigure('select_btn', state=tk.HIDDEN)
-            self.preview_canvas.itemconfigure('conse_box', state=tk.HIDDEN)
+            self.preview_canvas.itemconfigure('setting_op', state=tk.HIDDEN)
             self.id_click = self.preview_canvas.bind("<Button-1>", self.click_in)
             self.id_hold = self.preview_canvas.bind("<Button1-Motion>", self.click_hold)
             self.id_release = self.preview_canvas.bind("<ButtonRelease-1>", self.click_out)
@@ -167,7 +150,7 @@ class Desktop_imagerApp:
     def file_close(self):
         self.preview_canvas.delete("preview_img_tag")
         self.preview_canvas.itemconfigure('select_btn', state=tk.NORMAL)
-        self.preview_canvas.itemconfigure('conse_box', state=tk.NORMAL)
+        self.preview_canvas.itemconfigure('setting_op', state=tk.NORMAL)
         self.preview_canvas.unbind("<Button-1>", self.id_click)
         self.preview_canvas.unbind("<Button1-Motion>", self.id_hold)
         self.preview_canvas.unbind("<ButtonRelease-1>", self.id_release)
@@ -201,8 +184,13 @@ class Desktop_imagerApp:
     def open_sys_setting(self):
         try:
             webbrowser.open('ms-settings:display')
+            self.btn_sys_setting_open.configure(text="アプリを再読み込み", command=self.reload)
         except:
             pass
+
+    def reload(self):
+        self.simple_mode.destroy()
+        Desktop_imagerApp()
 
     def batch_mode(self):
         self.batch_mode = tk.Tk()
